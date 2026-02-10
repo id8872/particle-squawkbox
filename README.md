@@ -6,8 +6,8 @@ A high-frequency momentum scanner for the Particle Photon 2 that tracks the spre
 ## 🚀 Key Features
 * **Smart Polling Engine:** Automatically switches update rates based on market hours:
     * **Turbo (2s):** Market Open (9:30-11:00 AM) & Power Hour (3:00-4:00 PM).
-    * **Standard (4s):** Mid-day trading.
-    * **Sleep (60s):** Pre-market & After-hours.
+    * **Standard (4s):** Pre-Market Warmup (8:30-9:30 AM) & Mid-day trading.
+    * **Sleep (60s):** Before 8:30 AM & After 4:00 PM.
 * **Velocity Acceleration Logic:** Distinguishes between a normal trend breakout and a high-speed "Rush" or "Dump" (triggered by a >20% spike in momentum).
 * **Live Web Dashboard:**
     * **Responsive UI:** 600px mobile-friendly design.
