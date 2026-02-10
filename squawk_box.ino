@@ -170,52 +170,52 @@ void loop() {
 // =======================================================================================
 void handleQuote(const char *event, const char *data) {
     float p = atof(data); if (p <= 0) return; 
-    lastPrice = p; // Critical Update
+    lastPrice = p; 
     
-    // First Run Seeding
-    if (!initialized) { 
-        emaFast = emaSlow = lastPrice; 
-        diff = 0; 
-        initialized = true; 
-        forceFullUpdate = true; 
-        return; 
-    } 
+    if (!initialized) { emaFast=emaSlow=lastPrice; diff=0; initialized=true; forceFullUpdate=true; return; } 
 
-    float prevDiff = diff; // Snapshot for velocity check
-    
-    // Calculate EMAs (Recursive Formula)
+    float prevDiff = diff; 
     emaFast = (lastPrice * settings.alphaFast) + (emaFast * (1.0 - settings.alphaFast));
     emaSlow = (lastPrice * settings.alphaSlow) + (emaSlow * (1.0 - settings.alphaSlow));
     diff = emaFast - emaSlow; 
     
-    // Update Graph History
     velocityHistory[historyHead] = diff; 
     historyHead = (historyHead + 1) % HISTORY_SIZE;
     
     // --- ALERT LOGIC ---
-    if (diff > settings.chopLimit) {
-        // CASE 1: Standard Breakout
-        if (prevDiff <= settings.chopLimit) {
-            bzDuration = DUR_BULLISH; bzTimer = millis(); bzState = BZ_TONE_1; 
-            logEvent("BULL BREAK", diff);
+    
+    // 1. Check for Breakouts (Leaving Chop)
+    if (abs(diff) > settings.chopLimit) {
+        
+        // BULL SIDE
+        if (diff > 0) {
+            if (prevDiff <= settings.chopLimit) { // Just broke out
+                bzDuration = DUR_BULLISH; bzTimer = millis(); bzState = BZ_TONE_1; 
+                logEvent("BULL BREAK", diff);
+            }
+            else if (diff > (prevDiff * 1.20)) { // Accelerating
+                bzDuration = 100; bzTimer = millis(); bzState = BZ_TONE_2; 
+                logEvent("BULL RUSH", diff);
+            }
         }
-        // CASE 2: Acceleration Spike (>20% jump)
-        else if (diff > (prevDiff * 1.20)) {
-            bzDuration = 100; bzTimer = millis(); bzState = BZ_TONE_2; // Stutter Tone
-            logEvent("BULL RUSH", diff);
+        // BEAR SIDE
+        else {
+            if (prevDiff >= -settings.chopLimit) { // Just broke down
+                bzDuration = DUR_BEARISH; bzTimer = millis(); bzState = BZ_TONE_1; 
+                logEvent("BEAR BREAK", diff);
+            }
+            else if (diff < (prevDiff * 1.20)) { // Accelerating down
+                 bzDuration = 100; bzTimer = millis(); bzState = BZ_TONE_2; 
+                 logEvent("BEAR DUMP", diff);
+            }
         }
-    } 
-    else if (diff < -settings.chopLimit) {
-        // CASE 1: Standard Breakdown
-        if (prevDiff >= -settings.chopLimit) {
-            bzDuration = DUR_BEARISH; bzTimer = millis(); bzState = BZ_TONE_1; 
-            logEvent("BEAR BREAK", diff);
-        }
-        // CASE 2: Acceleration Dump (>20% drop)
-        else if (diff < (prevDiff * 1.20)) { 
-             bzDuration = 100; bzTimer = millis(); bzState = BZ_TONE_2; // Stutter Tone
-             logEvent("BEAR DUMP", diff);
-        }
+    }
+    // 2. Check for "Trend Death" (Returning to Chop)
+    // *** THIS IS THE NEW FIX ***
+    else if (abs(prevDiff) > settings.chopLimit) {
+        // We were trending, now we are not.
+        bzDuration = DUR_CHOP; bzTimer = millis(); bzState = BZ_TONE_1; // Short "Blip"
+        logEvent("TREND END", diff);
     }
 }
 
