@@ -386,17 +386,22 @@ void handleWebTraffic() {
 // --- VISUAL OUTPUT ---
 void updateLCD() {
     char b0[17]; char b1[17];
-    // Row 0: "SPY :$412.50"
+    
+    // Row 0: "SPY :$500.25"
     snprintf(b0, sizeof(b0), "%s :$%-7.2f", settings.symbol, lastPrice);
-    // Row 1: "V:0.15   SPY"
-    String m=""; if(strcmp(settings.symbol,"SPY")==0)m="SPY   "; else if(strcmp(settings.symbol,"QQQ")==0)m="QQQ   "; else m="IWM   ";
-    snprintf(b1, sizeof(b1), "V:%-7.2f %s", diff, m.c_str());
+    
+    // Row 1: "V:0.15  BULL" (Option 3 Logic)
+    String status = "CHOP";
+    if (diff > settings.chopLimit) status = "BULL";
+    else if (diff < -settings.chopLimit) status = "BEAR";
+    
+    snprintf(b1, sizeof(b1), "V:%-6.2f %s", diff, status.c_str());
 
-    // Only redraw changed text
+    // Only redraw if changed (Prevents flicker)
     if (strcmp(b0, lastRow0_Text) != 0) { lcd.setCursor(0, 0); lcd.print(b0); strcpy(lastRow0_Text, b0); }
     if (strcmp(b1, lastRow1_Text) != 0) { lcd.setCursor(0, 1); lcd.print(b1); strcpy(lastRow1_Text, b1); }
 
-    // Icons
+    // Icons (Right Side)
     byte cI = (diff > settings.chopLimit) ? 2 : (diff < -settings.chopLimit ? 3 : 4);
     if (cI != lastIconTrend) { lcd.setCursor(13, 0); lcd.write(cI); lastIconTrend = cI; }
     int cM = settings.isMuted ? 1 : 0;
