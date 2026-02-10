@@ -1,0 +1,9 @@
+{
+    "event": "finnhub_quote",
+    "url": "https://finnhub.io/api/v1/quote",
+    "requestType": "GET",
+    "query": {
+        "symbol": "{{PARTICLE_EVENT_VALUE}}",
+        "token": "YOUR_API_KEY_HERE"  <-- CHANGE THIS TO A PLACEHOLDER
+    }
+}
